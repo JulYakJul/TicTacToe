@@ -21,12 +21,17 @@ public class TicTacToe : MonoBehaviour
     public ParticleSystem particleSystemCrossPrefab;
     public ParticleSystem particleSystemToePrefab;
 
-    public Animator animator;
+    public Animator CrossAnimator;
+    public Animator ToeAnimator;
+    public Animator DrawAnimator;
+
     public AnimationClip toeWinAnimationClip;
     public AnimationClip crossWinAnimationClip;
+    public AnimationClip drawAnimationClip;
 
     private bool isPlayerXTurn = true;
     private bool isCross;
+    private bool isWin;
 
     private int crossesWinCount = 0;
     private int toesWinCount = 0;
@@ -103,7 +108,7 @@ public class TicTacToe : MonoBehaviour
                 player2Image.sprite = toeSprite1;
             }
 
-            if (IsGridFull())
+            if (IsGridFull() && !isWin)
             {
                 StartCoroutine(DisplayGameStateFor3Seconds("Ничья!"));
                 StartCoroutine(EndGame());
@@ -120,6 +125,7 @@ public class TicTacToe : MonoBehaviour
     {
         yield return new WaitForSeconds(3f);
         StartCoroutine(ResetGrid());
+        isWin = false;
     }
 
     bool IsGridFull()
@@ -142,15 +148,15 @@ public class TicTacToe : MonoBehaviour
 
     void ActivateWinAnimation(bool isCross)
     {
-        if (animator != null)
+        if (CrossAnimator != null && ToeAnimator != null)
         {
             if (isCross && crossWinAnimationClip != null)
             {
-                animator.SetBool("isCrossWin", true);
+                CrossAnimator.SetBool("isCrossWin", true);
             }
             else if (!isCross && toeWinAnimationClip != null)
             {
-                animator.SetBool("isToeWin", true);
+                ToeAnimator.SetBool("isToeWin", true);
             }
         }
     }
@@ -182,8 +188,7 @@ public class TicTacToe : MonoBehaviour
                 crossesWinCount++;
                 CrossText.text = crossesWinCount.ToString();
                 StartCoroutine(ResetGrid());
-                isCross = true;
-                ActivateWinAnimation(isCross);
+                isWin = true;
             }
             else if (grid[lastRow, 0].SymbolType == SymbolType.Toe)
             {
@@ -191,8 +196,7 @@ public class TicTacToe : MonoBehaviour
                 toesWinCount++;
                 ToeText.text = toesWinCount.ToString();
                 StartCoroutine(ResetGrid());
-                isCross = false;
-                ActivateWinAnimation(isCross);
+                isWin = true;
             }
         }
 
@@ -204,8 +208,7 @@ public class TicTacToe : MonoBehaviour
                 crossesWinCount++;
                 CrossText.text = crossesWinCount.ToString();
                 StartCoroutine(ResetGrid());
-                isCross = true;
-                ActivateWinAnimation(isCross);
+                isWin = true;
             }
             else if (grid[0, lastCol].SymbolType == SymbolType.Toe)
             {
@@ -213,8 +216,7 @@ public class TicTacToe : MonoBehaviour
                 toesWinCount++;
                 ToeText.text = toesWinCount.ToString();
                 StartCoroutine(ResetGrid());
-                isCross = false;
-                ActivateWinAnimation(isCross);
+                isWin = true;
             }
         }
 
@@ -228,8 +230,7 @@ public class TicTacToe : MonoBehaviour
                 crossesWinCount++;
                 CrossText.text = crossesWinCount.ToString();
                 StartCoroutine(ResetGrid());
-                isCross = true;
-                ActivateWinAnimation(isCross);
+                isWin = true;
             }
             else if (grid[1, 1].SymbolType == SymbolType.Toe)
             {
@@ -237,9 +238,18 @@ public class TicTacToe : MonoBehaviour
                 toesWinCount++;
                 ToeText.text = toesWinCount.ToString();
                 StartCoroutine(ResetGrid());
-                isCross = false;
-                ActivateWinAnimation(isCross);
+                isWin = true;
             }
+        }
+
+        if (toesWinCount == 3 && toesWinCount > crossesWinCount){
+            isCross = false;
+            ActivateWinAnimation(isCross);
+        } else if (crossesWinCount == 3 && crossesWinCount > toesWinCount) {
+            isCross = true;
+            ActivateWinAnimation(isCross);
+        } else if (toesWinCount == 3 && crossesWinCount == 3){
+            DrawAnimator.SetBool("isDraw", true);
         }
     }
 
