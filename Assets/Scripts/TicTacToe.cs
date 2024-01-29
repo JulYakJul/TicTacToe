@@ -23,11 +23,9 @@ public class TicTacToe : MonoBehaviour
 
     public Animator CrossAnimator;
     public Animator ToeAnimator;
-    public Animator DrawAnimator;
 
     public AnimationClip toeWinAnimationClip;
     public AnimationClip crossWinAnimationClip;
-    public AnimationClip drawAnimationClip;
 
     private bool isPlayerXTurn = true;
     private bool isCross;
@@ -40,8 +38,21 @@ public class TicTacToe : MonoBehaviour
     public TextMeshProUGUI ToeText;
     public TextMeshProUGUI GameState;
 
+    public Button playAgainButtonCross;
+    public Button playAgainButtonToe;
+
     void Start()
     {
+        if (playAgainButtonCross != null)
+        {
+            playAgainButtonCross.onClick.AddListener(PlayAgainCross);
+        }
+
+        if (playAgainButtonToe != null)
+        {
+            playAgainButtonToe.onClick.AddListener(PlayAgainToe);
+        }
+
         InitializeGrid();
     }
 
@@ -68,6 +79,39 @@ public class TicTacToe : MonoBehaviour
             }
         }
     }
+
+    void PlayAgainToe()
+    {
+        toesWinCount = 0;
+        ToeText.text = toesWinCount.ToString();
+
+        crossesWinCount = 0;
+        CrossText.text = crossesWinCount.ToString();
+
+        isWin = false;
+
+        if (ToeAnimator != null)
+        {
+            ToeAnimator.SetTrigger("PlayAgain");
+        }
+    }
+
+    void PlayAgainCross()
+    {
+        toesWinCount = 0;
+        ToeText.text = toesWinCount.ToString();
+
+        crossesWinCount = 0;
+        CrossText.text = crossesWinCount.ToString();
+
+        isWin = false;
+
+        if (CrossAnimator != null)
+        {
+            CrossAnimator.SetTrigger("PlayAgain");
+        }
+    }
+
 
     void OnCellClick(Cell cell)
     {
@@ -123,9 +167,9 @@ public class TicTacToe : MonoBehaviour
 
     IEnumerator EndGame()
     {
-        yield return new WaitForSeconds(3f);
-        StartCoroutine(ResetGrid());
+        yield return new WaitForSeconds(1f);
         isWin = false;
+        StartCoroutine(ResetGrid());
     }
 
     bool IsGridFull()
@@ -152,11 +196,11 @@ public class TicTacToe : MonoBehaviour
         {
             if (isCross && crossWinAnimationClip != null)
             {
-                CrossAnimator.SetBool("isCrossWin", true);
+                CrossAnimator.SetTrigger("isCrossWin");
             }
             else if (!isCross && toeWinAnimationClip != null)
             {
-                ToeAnimator.SetBool("isToeWin", true);
+                ToeAnimator.SetTrigger("isToeWin");
             }
         }
     }
@@ -243,13 +287,9 @@ public class TicTacToe : MonoBehaviour
         }
 
         if (toesWinCount == 3 && toesWinCount > crossesWinCount){
-            isCross = false;
-            ActivateWinAnimation(isCross);
+            ToeAnimator.SetTrigger("isToeWin");
         } else if (crossesWinCount == 3 && crossesWinCount > toesWinCount) {
-            isCross = true;
-            ActivateWinAnimation(isCross);
-        } else if (toesWinCount == 3 && crossesWinCount == 3){
-            DrawAnimator.SetBool("isDraw", true);
+            CrossAnimator.SetTrigger("isCrossWin");
         }
     }
 
@@ -261,6 +301,7 @@ public class TicTacToe : MonoBehaviour
             Destroy(cell.Button.gameObject);
         }
 
+        isWin = false;
         isPlayerXTurn = true;
 
         InitializeGrid();
