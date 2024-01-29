@@ -1,23 +1,39 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
+
 
 public class TicTacToe : MonoBehaviour
 {
     public Image crossPrefab;
     public Image toePrefab;
+    
+    public Image player1Image;
+    public Image player2Image; 
+
+    public Sprite crossSprite1;
+    public Sprite crossSprite2;
+    public Sprite toeSprite1;
+    public Sprite toeSprite2;
 
     private Cell[,] grid; 
     public ParticleSystem particleSystemCrossPrefab;
     public ParticleSystem particleSystemToePrefab;
 
+    public Animator animator;
+    public AnimationClip toeWinAnimationClip;
+    public AnimationClip crossWinAnimationClip;
+
     private bool isPlayerXTurn = true;
+    private bool isCross;
 
     private int crossesWinCount = 0;
     private int toesWinCount = 0;
 
     public TextMeshProUGUI CrossText;
     public TextMeshProUGUI ToeText;
+    public TextMeshProUGUI GameState;
 
     void Start()
     {
@@ -29,6 +45,8 @@ public class TicTacToe : MonoBehaviour
         grid = new Cell[3, 3];
 
         GridLayoutGroup gridLayout = GetComponent<GridLayoutGroup>();
+
+        isPlayerXTurn = true;
 
         for (int row = 0; row < 3; row++)
         {
@@ -48,6 +66,11 @@ public class TicTacToe : MonoBehaviour
 
     void OnCellClick(Cell cell)
     {
+        if (!IsGameInProgress())
+        {
+            return;
+        }
+
         if (cell.IsEmpty)
         {
             Image newSymbol = isPlayerXTurn ? Instantiate(crossPrefab) : Instantiate(toePrefab);
@@ -68,13 +91,68 @@ public class TicTacToe : MonoBehaviour
             ActivateParticleEffect(cell.Button.transform.position, particleSystemPrefab);
 
             isPlayerXTurn = !isPlayerXTurn;
+
+            if (isPlayerXTurn)
+            {
+                player1Image.sprite = crossSprite1;
+                player2Image.sprite = toeSprite2;
+            }
+            else
+            {
+                player1Image.sprite = crossSprite2;
+                player2Image.sprite = toeSprite1;
+            }
+
+            if (IsGridFull())
+            {
+                StartCoroutine(DisplayGameStateFor3Seconds("Ничья!"));
+                StartCoroutine(EndGame());
+            }
         }
+    }
+
+    bool IsGameInProgress()
+    {
+        return GameState.text == "";
+    }
+
+    IEnumerator EndGame()
+    {
+        yield return new WaitForSeconds(3f);
+        StartCoroutine(ResetGrid());
+    }
+
+    bool IsGridFull()
+    {
+        foreach (Cell cell in grid)
+        {
+            if (cell.IsEmpty)
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     void ActivateParticleEffect(Vector3 position, ParticleSystem particleSystemPrefab)
     {
         ParticleSystem particleSystem = Instantiate(particleSystemPrefab, position, Quaternion.identity);
         Destroy(particleSystem.gameObject, particleSystem.main.duration);
+    }
+
+    void ActivateWinAnimation(bool isCross)
+    {
+        if (animator != null)
+        {
+            if (isCross && crossWinAnimationClip != null)
+            {
+                animator.SetBool("isCrossWin", true);
+            }
+            else if (!isCross && toeWinAnimationClip != null)
+            {
+                animator.SetBool("isToeWin", true);
+            }
+        }
     }
 
     Button ButtonPrefab()
@@ -87,21 +165,34 @@ public class TicTacToe : MonoBehaviour
         return button;
     }
 
+    IEnumerator DisplayGameStateFor3Seconds(string message)
+    {
+        GameState.text = message;
+        yield return new WaitForSeconds(2f);
+        GameState.text = "";
+    }
+
     void CheckForWinner(int lastRow, int lastCol)
     {
         if (grid[lastRow, 0].SymbolType != SymbolType.None && grid[lastRow, 0].SymbolType == grid[lastRow, 1].SymbolType && grid[lastRow, 1].SymbolType == grid[lastRow, 2].SymbolType)
         {
             if (grid[lastRow, 0].SymbolType == SymbolType.Cross)
             {
-                Debug.Log("Победа! Крестики выиграли в строке " + (lastRow + 1) + "!");
+                StartCoroutine(DisplayGameStateFor3Seconds("Победа! Крестики выиграли в строке " + (lastRow + 1) + "!"));
                 crossesWinCount++;
                 CrossText.text = crossesWinCount.ToString();
+                StartCoroutine(ResetGrid());
+                isCross = true;
+                ActivateWinAnimation(isCross);
             }
             else if (grid[lastRow, 0].SymbolType == SymbolType.Toe)
             {
-                Debug.Log("Победа! Нолики выиграли в строке " + (lastRow + 1) + "!");
+                StartCoroutine(DisplayGameStateFor3Seconds("Победа! Нолики выиграли в строке " + (lastRow + 1) + "!"));
                 toesWinCount++;
                 ToeText.text = toesWinCount.ToString();
+                StartCoroutine(ResetGrid());
+                isCross = false;
+                ActivateWinAnimation(isCross);
             }
         }
 
@@ -109,15 +200,21 @@ public class TicTacToe : MonoBehaviour
         {
             if (grid[0, lastCol].SymbolType == SymbolType.Cross)
             {
-                Debug.Log("Победа! Крестики выиграли в колонке " + (lastCol + 1) + "!");
+                StartCoroutine(DisplayGameStateFor3Seconds("Победа! Крестики выиграли в колонке " + (lastCol + 1) + "!"));
                 crossesWinCount++;
                 CrossText.text = crossesWinCount.ToString();
+                StartCoroutine(ResetGrid());
+                isCross = true;
+                ActivateWinAnimation(isCross);
             }
             else if (grid[0, lastCol].SymbolType == SymbolType.Toe)
             {
-                Debug.Log("Победа! Нолики выиграли в колонке " + (lastCol + 1) + "!");
+                StartCoroutine(DisplayGameStateFor3Seconds("Победа! Нолики выиграли в колонке " + (lastCol + 1) + "!"));
                 toesWinCount++;
                 ToeText.text = toesWinCount.ToString();
+                StartCoroutine(ResetGrid());
+                isCross = false;
+                ActivateWinAnimation(isCross);
             }
         }
 
@@ -127,21 +224,37 @@ public class TicTacToe : MonoBehaviour
         {
             if (grid[1, 1].SymbolType == SymbolType.Cross)
             {
-                Debug.Log("Победа! Крестики выиграли по диагонали!");
+                StartCoroutine(DisplayGameStateFor3Seconds("Победа! Крестики выиграли по диагонали!"));
                 crossesWinCount++;
                 CrossText.text = crossesWinCount.ToString();
+                StartCoroutine(ResetGrid());
+                isCross = true;
+                ActivateWinAnimation(isCross);
             }
             else if (grid[1, 1].SymbolType == SymbolType.Toe)
             {
-                Debug.Log("Победа! Нолики выиграли по диагонали!");
+                StartCoroutine(DisplayGameStateFor3Seconds("Победа! Нолики выиграли по диагонали!"));
                 toesWinCount++;
                 ToeText.text = toesWinCount.ToString();
+                StartCoroutine(ResetGrid());
+                isCross = false;
+                ActivateWinAnimation(isCross);
             }
         }
-
-        Debug.Log("Статистика: Крестики - " + crossesWinCount + ", Нолики - " + toesWinCount);
     }
 
+    IEnumerator ResetGrid()
+    {
+        yield return new WaitForSeconds(2f);
+        foreach (Cell cell in grid)
+        {
+            Destroy(cell.Button.gameObject);
+        }
+
+        isPlayerXTurn = true;
+
+        InitializeGrid();
+    }
 
     public enum SymbolType
     {
