@@ -31,8 +31,8 @@ public class TicTacToe : MonoBehaviour
     private bool isCross;
     private bool isWin;
 
-    private int crossesWinCount = 0;
-    private int toesWinCount = 0;
+    public int crossesWinCount = 0;
+    public int toesWinCount = 0;
 
     public TextMeshProUGUI CrossText;
     public TextMeshProUGUI ToeText;
@@ -80,7 +80,7 @@ public class TicTacToe : MonoBehaviour
         }
     }
 
-    void PlayAgainToe()
+    public void PlayAgainToe()
     {
         toesWinCount = 0;
         ToeText.text = toesWinCount.ToString();
@@ -96,7 +96,7 @@ public class TicTacToe : MonoBehaviour
         }
     }
 
-    void PlayAgainCross()
+    public void PlayAgainCross()
     {
         toesWinCount = 0;
         ToeText.text = toesWinCount.ToString();
