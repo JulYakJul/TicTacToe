@@ -2,9 +2,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using System.Collections.Generic; 
 
-
-public class TicTacToe : MonoBehaviour
+public class TicTacToeSinglePlay : MonoBehaviour
 {
     public Image crossPrefab;
     public Image toePrefab;
@@ -41,6 +41,10 @@ public class TicTacToe : MonoBehaviour
     public Button playAgainButtonCross;
     public Button playAgainButtonToe;
 
+    private bool isVsComputer = true;
+
+    private bool isCrossTurn;
+
     void Start()
     {
         if (playAgainButtonCross != null)
@@ -54,6 +58,8 @@ public class TicTacToe : MonoBehaviour
         }
 
         InitializeGrid();
+
+        isCrossTurn = true;
     }
 
     void InitializeGrid()
@@ -112,7 +118,6 @@ public class TicTacToe : MonoBehaviour
         }
     }
 
-
     void OnCellClick(Cell cell)
     {
         if (!IsGameInProgress())
@@ -122,16 +127,25 @@ public class TicTacToe : MonoBehaviour
 
         if (cell.IsEmpty)
         {
-            Image newSymbol = isPlayerXTurn ? Instantiate(crossPrefab) : Instantiate(toePrefab);
+            Image newSymbol;
+
+            if (isPlayerXTurn)
+            {
+                newSymbol = Instantiate(crossPrefab);
+                cell.SetSymbol(newSymbol, SymbolType.Cross);
+            }
+            else
+            {
+                newSymbol = Instantiate(toePrefab);
+                cell.SetSymbol(newSymbol, SymbolType.Toe);
+            }
+
             newSymbol.transform.SetParent(cell.Button.transform, false);
 
             cell.Button.image.sprite = newSymbol.sprite;
-
-            cell.SetSymbol(newSymbol, isPlayerXTurn);
-
             grid[cell.Row, cell.Col] = cell;
 
-            cell.Button.image.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+            cell.Button.image.color = Color.white;
 
             CheckForWinner(cell.Row, cell.Col);
 
@@ -141,23 +155,188 @@ public class TicTacToe : MonoBehaviour
 
             isPlayerXTurn = !isPlayerXTurn;
 
-            if (isPlayerXTurn)
-            {
-                player1Image.sprite = crossSprite1;
-                player2Image.sprite = toeSprite2;
-            }
-            else
-            {
-                player1Image.sprite = crossSprite2;
-                player2Image.sprite = toeSprite1;
-            }
+            player1Image.sprite = isPlayerXTurn ? crossSprite1 : toeSprite1;
+            player2Image.sprite = isPlayerXTurn ? toeSprite2 : crossSprite2;
 
             if (IsGridFull() && !isWin)
             {
                 StartCoroutine(DisplayGameStateFor3Seconds("Ничья!"));
                 StartCoroutine(EndGame());
             }
+
+            if (isVsComputer && !isWin && !isPlayerXTurn)
+            {
+                MakeComputerMove();
+            }
         }
+    }
+
+
+    void MakeComputerMove()
+    {
+        Cell winningMove = FindWinningMove(SymbolType.Toe);
+        if (winningMove != null)
+        {
+            MakeMoveAtCell(winningMove, SymbolType.Toe);
+            return;
+        }
+
+        Cell blockingMove = FindWinningMove(SymbolType.Cross);
+        if (blockingMove != null)
+        {
+            MakeMoveAtCell(blockingMove, SymbolType.Toe);
+            return;
+        }
+
+        Cell randomMove = FindRandomEmptyCell();
+        if (randomMove != null)
+        {
+            MakeMoveAtCell(randomMove, SymbolType.Toe);
+            return;
+        }
+    }
+
+    void MakeMoveAtCell(Cell cell, SymbolType symbolType)
+    {
+        Image newSymbol = Instantiate(toePrefab);
+
+        newSymbol.transform.SetParent(cell.Button.transform, false);
+        cell.SetSymbol(newSymbol, symbolType);
+
+        cell.Button.image.sprite = newSymbol.sprite;
+        grid[cell.Row, cell.Col] = cell;
+
+        cell.Button.image.color = Color.white;
+
+        CheckForWinner(cell.Row, cell.Col);
+
+        ParticleSystem particleSystemPrefab = symbolType == SymbolType.Cross ? particleSystemCrossPrefab : particleSystemToePrefab;
+
+        ActivateParticleEffect(cell.Button.transform.position, particleSystemPrefab);
+
+        isPlayerXTurn = !isPlayerXTurn;
+    }
+
+    Cell FindWinningMove(SymbolType symbolType)
+    {
+        for (int row = 0; row < 3; row++)
+        {
+            int emptyCount = 0;
+            Cell emptyCell = null;
+
+            for (int col = 0; col < 3; col++)
+            {
+                if (grid[row, col].SymbolType == SymbolType.None)
+                {
+                    emptyCount++;
+                    emptyCell = grid[row, col];
+                }
+                else if (grid[row, col].SymbolType != symbolType)
+                {
+                    emptyCount = 0;
+                    emptyCell = null;
+                    break;
+                }
+            }
+
+            if (emptyCount == 1)
+            {
+                return emptyCell;
+            }
+        }
+
+        for (int col = 0; col < 3; col++)
+        {
+            int emptyCount = 0;
+            Cell emptyCell = null;
+
+            for (int row = 0; row < 3; row++)
+            {
+                if (grid[row, col].SymbolType == SymbolType.None)
+                {
+                    emptyCount++;
+                    emptyCell = grid[row, col];
+                }
+                else if (grid[row, col].SymbolType != symbolType)
+                {
+                    emptyCount = 0;
+                    emptyCell = null;
+                    break;
+                }
+            }
+
+            if (emptyCount == 1)
+            {
+                return emptyCell;
+            }
+        }
+
+        int diagonal1Count = 0;
+        Cell diagonal1Cell = null;
+
+        int diagonal2Count = 0;
+        Cell diagonal2Cell = null;
+
+        for (int i = 0; i < 3; i++)
+        {
+            if (grid[i, i].SymbolType == SymbolType.None)
+            {
+                diagonal1Count++;
+                diagonal1Cell = grid[i, i];
+            }
+            else if (grid[i, i].SymbolType != symbolType)
+            {
+                diagonal1Count = 0;
+                diagonal1Cell = null;
+                break;
+            }
+
+            if (grid[i, 2 - i].SymbolType == SymbolType.None)
+            {
+                diagonal2Count++;
+                diagonal2Cell = grid[i, 2 - i];
+            }
+            else if (grid[i, 2 - i].SymbolType != symbolType)
+            {
+                diagonal2Count = 0;
+                diagonal2Cell = null;
+                break;
+            }
+        }
+
+        if (diagonal1Count == 1)
+        {
+            return diagonal1Cell;
+        }
+
+        if (diagonal2Count == 1)
+        {
+            return diagonal2Cell;
+        }
+
+        return null;
+    }
+
+
+    Cell FindRandomEmptyCell()
+    {
+        List<Cell> emptyCells = new List<Cell>();
+
+        foreach (Cell cell in grid)
+        {
+            if (cell.IsEmpty)
+            {
+                emptyCells.Add(cell);
+            }
+        }
+
+        if (emptyCells.Count > 0)
+        {
+            int randomIndex = Random.Range(0, emptyCells.Count);
+            return emptyCells[randomIndex];
+        }
+
+        return null;
     }
 
     bool IsGameInProgress()
@@ -172,18 +351,6 @@ public class TicTacToe : MonoBehaviour
         StartCoroutine(ResetGrid());
     }
 
-    bool IsGridFull()
-    {
-        foreach (Cell cell in grid)
-        {
-            if (cell.IsEmpty)
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-
     public void GoToMenu(){
        foreach (Cell cell in grid)
         {
@@ -194,6 +361,18 @@ public class TicTacToe : MonoBehaviour
         isPlayerXTurn = true;
 
         InitializeGrid();
+    }
+
+    bool IsGridFull()
+    {
+        foreach (Cell cell in grid)
+        {
+            if (cell.IsEmpty)
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     void ActivateParticleEffect(Vector3 position, ParticleSystem particleSystemPrefab)
@@ -298,12 +477,16 @@ public class TicTacToe : MonoBehaviour
             }
         }
 
-        if (toesWinCount == 3 && toesWinCount > crossesWinCount){
+        if (toesWinCount == 3 && toesWinCount > crossesWinCount)
+        {
             ToeAnimator.SetTrigger("isToeWin");
-        } else if (crossesWinCount == 3 && crossesWinCount > toesWinCount) {
+        }
+        else if (crossesWinCount == 3 && crossesWinCount > toesWinCount)
+        {
             CrossAnimator.SetTrigger("isCrossWin");
         }
     }
+
 
     IEnumerator ResetGrid()
     {
@@ -340,17 +523,23 @@ public class TicTacToe : MonoBehaviour
         {
             Row = row;
             Col = col;
+            SymbolType = SymbolType.None;
+        }
+
+        public void SetSymbol(Image symbol, SymbolType symbolType)
+        {
+            Symbol = symbol;
+            SymbolType = symbolType;
+        }
+
+        public void SetSymbolType(SymbolType symbolType)
+        {
+            SymbolType = symbolType;
         }
 
         public void SetButton(Button button)
         {
             Button = button;
-        }
-
-        public void SetSymbol(Image symbol, bool isCross)
-        {
-            Symbol = symbol;
-            SymbolType = isCross ? SymbolType.Cross : SymbolType.Toe;
         }
     }
 }
