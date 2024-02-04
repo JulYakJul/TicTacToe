@@ -24,12 +24,15 @@ public class TicTacToeSinglePlay : MonoBehaviour
     public Animator CrossAnimator;
     public Animator ToeAnimator;
 
+    public LanguageManager LanguageManager;
+
     public AnimationClip toeWinAnimationClip;
     public AnimationClip crossWinAnimationClip;
 
     private bool isPlayerXTurn = true;
     private bool isCross;
     private bool isWin;
+    public bool isSingleMode = false;
 
     public int crossesWinCount = 0;
     public int toesWinCount = 0;
@@ -57,12 +60,25 @@ public class TicTacToeSinglePlay : MonoBehaviour
             playAgainButtonToe.onClick.AddListener(PlayAgainToe);
         }
 
-        InitializeGrid();
-
         isCrossTurn = true;
     }
 
-    void InitializeGrid()
+    void Update(){
+        if (toesWinCount >= 3 && toesWinCount > crossesWinCount)
+        {
+            toesWinCount = 0;
+            crossesWinCount = 0;
+            ToeAnimator.SetTrigger("isToeWin");
+        }
+        else if (crossesWinCount >= 3 && crossesWinCount > toesWinCount)
+        {
+            toesWinCount = 0;
+            crossesWinCount = 0;
+            CrossAnimator.SetTrigger("isCrossWin");
+        }
+    }
+
+    public void InitializeGrid()
     {
         grid = new Cell[3, 3];
 
@@ -155,12 +171,19 @@ public class TicTacToeSinglePlay : MonoBehaviour
 
             isPlayerXTurn = !isPlayerXTurn;
 
-            player1Image.sprite = isPlayerXTurn ? crossSprite1 : toeSprite1;
+            player1Image.sprite = isPlayerXTurn ? crossSprite2 : toeSprite2;
             player2Image.sprite = isPlayerXTurn ? toeSprite2 : crossSprite2;
 
             if (IsGridFull() && !isWin)
             {
-                StartCoroutine(DisplayGameStateFor3Seconds("Ничья!"));
+                if (LanguageManager.RussianLanguage == true){
+                    StartCoroutine(DisplayGameStateFor3Seconds("Ничья!"));
+                } else if (LanguageManager.EnglishLanguage == true){
+                    StartCoroutine(DisplayGameStateFor3Seconds("Tie!"));
+                } else if (LanguageManager.TurkishLanguage == true){
+                    StartCoroutine(DisplayGameStateFor3Seconds("Kravat!"));
+                }
+
                 StartCoroutine(EndGame());
             }
 
@@ -352,15 +375,14 @@ public class TicTacToeSinglePlay : MonoBehaviour
     }
 
     public void GoToMenu(){
-       foreach (Cell cell in grid)
+        Debug.Log("Ресет сетка игры с компьютером");
+        foreach (Cell cell in grid)
         {
             Destroy(cell.Button.gameObject);
         }
 
         isWin = false;
         isPlayerXTurn = true;
-
-        InitializeGrid();
     }
 
     bool IsGridFull()
@@ -419,7 +441,14 @@ public class TicTacToeSinglePlay : MonoBehaviour
         {
             if (grid[lastRow, 0].SymbolType == SymbolType.Cross)
             {
-                StartCoroutine(DisplayGameStateFor3Seconds("Победа! Крестики выиграли в строке " + (lastRow + 1) + "!"));
+                if (LanguageManager.RussianLanguage == true){
+                    StartCoroutine(DisplayGameStateFor3Seconds("Крестики выиграли в строке " + (lastRow + 1) + "!"));
+                } else if (LanguageManager.EnglishLanguage == true){
+                    StartCoroutine(DisplayGameStateFor3Seconds("Victory! The X's won the row " + (lastRow + 1) + "!"));
+                } else if (LanguageManager.TurkishLanguage == true){
+                    StartCoroutine(DisplayGameStateFor3Seconds("Zafer! Haçlar üst üste kazandı " + (lastRow + 1) + "!"));
+                }
+                
                 crossesWinCount++;
                 CrossText.text = crossesWinCount.ToString();
                 StartCoroutine(ResetGrid());
@@ -427,7 +456,14 @@ public class TicTacToeSinglePlay : MonoBehaviour
             }
             else if (grid[lastRow, 0].SymbolType == SymbolType.Toe)
             {
-                StartCoroutine(DisplayGameStateFor3Seconds("Победа! Нолики выиграли в строке " + (lastRow + 1) + "!"));
+                if (LanguageManager.RussianLanguage == true){
+                    StartCoroutine(DisplayGameStateFor3Seconds("Нолики выиграли в строке " + (lastRow + 1) + "!"));
+                } else if (LanguageManager.EnglishLanguage == true){
+                    StartCoroutine(DisplayGameStateFor3Seconds("Victory! The Noles won in a row " + (lastRow + 1) + "!"));
+                } else if (LanguageManager.TurkishLanguage == true){
+                    StartCoroutine(DisplayGameStateFor3Seconds("Zafer! Noles üst üste kazandı " + (lastRow + 1) + "!"));
+                }
+
                 toesWinCount++;
                 ToeText.text = toesWinCount.ToString();
                 StartCoroutine(ResetGrid());
@@ -439,7 +475,14 @@ public class TicTacToeSinglePlay : MonoBehaviour
         {
             if (grid[0, lastCol].SymbolType == SymbolType.Cross)
             {
-                StartCoroutine(DisplayGameStateFor3Seconds("Победа! Крестики выиграли в колонке " + (lastCol + 1) + "!"));
+                if (LanguageManager.RussianLanguage == true){
+                    StartCoroutine(DisplayGameStateFor3Seconds("Крестики выиграли в колонке " + (lastCol + 1) + "!"));
+                } else if (LanguageManager.EnglishLanguage == true){
+                    StartCoroutine(DisplayGameStateFor3Seconds("Victory! The X's won the column " + (lastRow + 1) + "!"));
+                } else if (LanguageManager.TurkishLanguage == true){
+                    StartCoroutine(DisplayGameStateFor3Seconds("Zafer! X'ler sütunu kazandı " + (lastRow + 1) + "!"));
+                }
+
                 crossesWinCount++;
                 CrossText.text = crossesWinCount.ToString();
                 StartCoroutine(ResetGrid());
@@ -447,7 +490,14 @@ public class TicTacToeSinglePlay : MonoBehaviour
             }
             else if (grid[0, lastCol].SymbolType == SymbolType.Toe)
             {
-                StartCoroutine(DisplayGameStateFor3Seconds("Победа! Нолики выиграли в колонке " + (lastCol + 1) + "!"));
+                if (LanguageManager.RussianLanguage == true){
+                    StartCoroutine(DisplayGameStateFor3Seconds("Нолики выиграли в колонке " + (lastCol + 1) + "!"));
+                } else if (LanguageManager.EnglishLanguage == true){
+                    StartCoroutine(DisplayGameStateFor3Seconds("Victory! The Noles won the column " + (lastRow + 1) + "!"));
+                } else if (LanguageManager.TurkishLanguage == true){
+                    StartCoroutine(DisplayGameStateFor3Seconds("Zafer! Noles sütunu kazandı " + (lastRow + 1) + "!"));
+                }
+
                 toesWinCount++;
                 ToeText.text = toesWinCount.ToString();
                 StartCoroutine(ResetGrid());
@@ -461,7 +511,14 @@ public class TicTacToeSinglePlay : MonoBehaviour
         {
             if (grid[1, 1].SymbolType == SymbolType.Cross)
             {
-                StartCoroutine(DisplayGameStateFor3Seconds("Победа! Крестики выиграли по диагонали!"));
+                if (LanguageManager.RussianLanguage == true){  
+                    StartCoroutine(DisplayGameStateFor3Seconds("Крестики выиграли по диагонали!"));
+                } else if (LanguageManager.EnglishLanguage == true){
+                    StartCoroutine(DisplayGameStateFor3Seconds("Victory! The X's have won on the diagonal!"));
+                } else if (LanguageManager.TurkishLanguage == true){
+                    StartCoroutine(DisplayGameStateFor3Seconds("Zafer! Çaprazlar çapraz olarak kazandı!"));
+                }
+                
                 crossesWinCount++;
                 CrossText.text = crossesWinCount.ToString();
                 StartCoroutine(ResetGrid());
@@ -469,24 +526,27 @@ public class TicTacToeSinglePlay : MonoBehaviour
             }
             else if (grid[1, 1].SymbolType == SymbolType.Toe)
             {
-                StartCoroutine(DisplayGameStateFor3Seconds("Победа! Нолики выиграли по диагонали!"));
+                if (LanguageManager.RussianLanguage == true){  
+                    StartCoroutine(DisplayGameStateFor3Seconds("Нолики выиграли по диагонали!"));
+                } else if (LanguageManager.EnglishLanguage == true){
+                    StartCoroutine(DisplayGameStateFor3Seconds("Victory! The Noles have won on the diagonal!"));
+                } else if (LanguageManager.TurkishLanguage == true){
+                    StartCoroutine(DisplayGameStateFor3Seconds("Zafer! Noles çapraz olarak kazandı!"));
+                }
+
                 toesWinCount++;
                 ToeText.text = toesWinCount.ToString();
                 StartCoroutine(ResetGrid());
                 isWin = true;
             }
         }
-
-        if (toesWinCount == 3 && toesWinCount > crossesWinCount)
-        {
+        
+        if (toesWinCount == 3 && toesWinCount > crossesWinCount){
             ToeAnimator.SetTrigger("isToeWin");
-        }
-        else if (crossesWinCount == 3 && crossesWinCount > toesWinCount)
-        {
+        } else if (crossesWinCount == 3 && crossesWinCount > toesWinCount) {
             CrossAnimator.SetTrigger("isCrossWin");
         }
     }
-
 
     IEnumerator ResetGrid()
     {
